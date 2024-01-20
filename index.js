@@ -212,12 +212,10 @@ setInterval(() => {
             let vP = canva.ToViewPort(x, y, viewPort);
             let ray = new Ray(camera.position, camera.position.directionTowards(vP));
             color = ray.TraceRay(1, Number.MAX_SAFE_INTEGER, spheres);
-            //canva.drawPixel(x, y, color);
             canva.drawPixelOnCanvas(x, y, color, context);
         }
     }
 
-    //refreshTimer.innerHTML = `${canva.Draw()}`;
     let endTime = new Date().getTime();
     fps = 1000/(endTime-startTime);
     performaceMeasurementText.innerHTML = `Render Latency: ${endTime - startTime}ms - FPS: ${fps}`
@@ -245,90 +243,52 @@ function displaySphereList(){
       setButtonForX(i, div);
       setButtonForY(i, div);
       setButtonForZ(i, div);
+      
       sphereUL.appendChild(node);
   }
 }
 
 function setButtonForX(index, div){
-    let minusButton = document.createElement('button');
-    let plusButton = document.createElement('button');
-    let textNode = document.createElement('p');
-    textNode.id = `sphere-${index}-x`;
-    textNode.innerHTML = `${spheres[index].center.x}`;
-    minusButton.innerHTML = `-`;
-    plusButton.innerHTML = `+`;
-    minusButton.onclick = function() {
-      changeX(spheres[index], -1);
-      }
-    plusButton.onclick = function() {
-      changeX(spheres[index], 1);
-      }
-      div.appendChild(minusButton);
-      div.appendChild(textNode);
-      div.appendChild(plusButton);
+    var slider = createSliderFor(-5, 5, spheres[index].center.x, function(value) {
+        spheres[index].center.x = value;
+    }, `slider-sphere-${index}-x`,
+    'X')
+    div.appendChild(slider);
 }
 
 function setButtonForY(index, div){
-    let minusButton = document.createElement('button');
-    let plusButton = document.createElement('button');
-    let textNode = document.createElement('p');
-    textNode.classList.add(`sphere-${index}-y`);
-    textNode.innerHTML = spheres[index].center.y;
-    minusButton.innerHTML = `-`;
-    plusButton.innerHTML = `+`;
-    minusButton.onclick = function() {
-      changeY(spheres[index], -1);
-      }
-    plusButton.onclick = function() {
-      changeY(spheres[index], 1);
-      }
-      div.appendChild(minusButton);
-      div.appendChild(textNode);
-      div.appendChild(plusButton);
+    var slider = createSliderFor(-5, 5, spheres[index].center.y, function(value) {
+        spheres[index].center.y = value;
+    }, `slider-sphere-${index}-y`,
+    'Y')
+    div.appendChild(slider);
 }
 
 function setButtonForZ(index, div){
-    let minusButton = document.createElement('button');
-    let plusButton = document.createElement('button');
-    let textNode = document.createElement('p');
-    textNode.classList.add(`sphere-${index}-z`);
-    textNode.innerHTML = spheres[index].center.z;
-    minusButton.innerHTML = `-`;
-    plusButton.innerHTML = `+`;
-    minusButton.onclick = function() {
-      changeZ(spheres[index], -1);
-      }
-    plusButton.onclick = function() {
-      changeZ(spheres[index], 1);
-      }
-      div.appendChild(minusButton);
-      div.appendChild(textNode);
-      div.appendChild(plusButton);
+    var slider = createSliderFor(-5, 5, spheres[index].center.z, function(value) {
+        spheres[index].center.z = value;
+    }, `slider-sphere-${index}-z`,
+    'Z')
+    div.appendChild(slider);
 }
 
-function changeX(sphere, value){
-    sphere.center.x += value;
-}
-
-function changeY(sphere, value){
-    sphere.center.y += value;
-}
-
-function changeZ(sphere, value){
-    sphere.center.z += value;
-}
-
-function createSliderFor(min, max, value, valueChangeFunc){
+function createSliderFor(min, max, value, valueChangeFunc, identifier, fieldIdentifier){
     var sliderDiv = document.createElement(`div`);
+    var sliderValueDisplay = document.createElement(`p`);
+    sliderValueDisplay.id = `${identifier}`;
+    sliderValueDisplay.innerHTML = `${fieldIdentifier}: ${value}`;
     sliderDiv.classList.add(`slider-container`);
     var slider = document.createElement(`input`);
     slider.classList.add(`slider-input`);
+    sliderDiv.appendChild(sliderValueDisplay);
     sliderDiv.appendChild(slider);
     slider.type = `range`;
     slider.min = min;
     slider.max = max;
     slider.value = value;
     slider.oninput = function() {
-        valueChangeFunc();
+        sliderValueDisplay.innerHTML = `${fieldIdentifier}: ${this.value}`;
+        valueChangeFunc(this.value);
     }
+    return sliderDiv;
 }

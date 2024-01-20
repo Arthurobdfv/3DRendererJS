@@ -152,15 +152,15 @@ class Ray {
             let results = this.IntersectRaySphere(sphere);
             let t1 = results[0];
             let t2 = results[1];
+            if(t2 > tInitial && t2 < tFinal && t2 < closest_t){
+                closest_t = t2;
+                closest_sphere = sphere;
+            }
             if(t1 > tInitial && t1 < tFinal && t1 < closest_t){
                 closest_t = t1;
                 closest_sphere = sphere;
             }
 
-            if(t2 > tInitial && t2 < tFinal && t2 < closest_t){
-                closest_t = t2;
-                closest_sphere = sphere;
-            }
         });
         if(closest_sphere === null){
             return new Color(0,0,0);
@@ -174,15 +174,15 @@ class Ray {
 
         let a = this.direction.dot(this.direction);
         let b = 2*this.direction.dot(c0);
-        let c = c0.dot(c0) - r*r;
+        let c = (c0.dot(c0)) - r*r;
 
         let discriminant = b*b - 4*a*c;
         if(discriminant < 0) {
             return [Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER];
         }
 
-        let t1 = (-b + (discriminant*discriminant) / (2*a));
-        let t2 = (-b - (discriminant*discriminant) / (2*a));
+        let t1 = (-b + Math.sqrt(discriminant*discriminant) / (2*a));
+        let t2 = (-b - Math.sqrt(discriminant*discriminant) / (2*a));
         return [t1,t2];
     }
 }
@@ -200,7 +200,7 @@ let timerInSeconds = 0;
 let viewPort = new ViewPort(2,1);
 let sphereRed = new Sphere(new Vector3(0,-1,3), 1, new Color(255,0,0));
 let sphereBlue = new Sphere(new Vector3(2,0,4), 1, new Color(0,0,255));
-let sphereGreen = new Sphere(new Vector3(-2,0,4), 1, new Color(0,255,135));
+let sphereGreen = new Sphere(new Vector3(0,0,4), 1, new Color(0,255,135));
 
 let spheres = [sphereRed, sphereBlue, sphereGreen];
 let fps = 30;

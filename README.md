@@ -12,7 +12,7 @@ As mentioned on the Context section, I am following along a book, and each chapt
 The book goes through 2 different rendering techniques, Raytracing and Rasterizing, each of those rendering techniques have multiple steps to achieve the end results. I will be separating the project in a way so you can see the two different implementations and each step of those as those are in the book.
 ### :space_invader: Implementation 
 #### :gun: Raytracer
-1. :heavy_check_mark: Basic Raytracing Rendering
+1. :heavy_check_mark: [Basic Raytracing Rendering](./README.md)
 2. :construction: Adding Lights
 3. :x: Shadows and Reflections
 4. :x: Extending the Raytracer

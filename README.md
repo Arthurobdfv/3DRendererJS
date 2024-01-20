@@ -1,5 +1,6 @@
 # 3DRendererJS
 An study-project about 3D rendering using JS.
+You can see the project running [**live here**](https://arthurobdfv.github.io/3DRendererJS/)
 
 ## :eyeglasses: Context
 As I continue my journey throughout the game development area, one topic that is mandatory for learning is 3D Rendering. Studying this topic not only will enlight me on how things are rendered behind the scenes but will also allow me to use that knowledge to achieve better / stylized graphics and also improve performance on high-fidelity graphics.<br>

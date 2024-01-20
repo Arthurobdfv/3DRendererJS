@@ -187,7 +187,6 @@ class Ray {
     }
 }
 
-
 var width = 600;
 var height = 300;
 canvas.width = width;
@@ -200,7 +199,7 @@ let timerInSeconds = 0;
 let viewPort = new ViewPort(2,1);
 let sphereRed = new Sphere(new Vector3(0,-1,3), 1, new Color(255,0,0));
 let sphereBlue = new Sphere(new Vector3(2,0,4), 1, new Color(0,0,255));
-let sphereGreen = new Sphere(new Vector3(0,0,4), 1, new Color(0,255,135));
+let sphereGreen = new Sphere(new Vector3(-2,0,4), 1, new Color(0,255,135));
 
 let spheres = [sphereRed, sphereBlue, sphereGreen];
 let fps = 30;
@@ -238,14 +237,65 @@ function displaySphereList(){
       let div = document.createElement('div');
       div.classList.add('sphere-details'); 
       node.appendChild(div);
-      let text = document.createTextNode(`Sphere radius ${spheres[i].radius}, center: (${spheres[i].center.x},${spheres[i].center.y}, ${spheres[i].center.z})`);
+      let text = document.createElement(`p`);
+      text.id = `sphere-${i}-name`;
+      text.innerHTML = `Sphere ${spheres[i].color.withColor(`color`)}`;
       div.appendChild(text);
-      setButtonForX(i, div);
-      setButtonForY(i, div);
-      setButtonForZ(i, div);
-      
+      let centerPropsDisplay = document.createElement(`div`);
+      centerPropsDisplay.classList.add(`sphere-center-props-display`);
+      centerPropsDisplay.id = `sphere-${i}-center-props-display`;
+      let centerLabel = document.createElement(`p`);
+      centerLabel.innerHTML = `Center props:`
+      centerPropsDisplay.appendChild(centerLabel);
+      setButtonForX(i, centerPropsDisplay);
+      setButtonForY(i, centerPropsDisplay);
+      setButtonForZ(i, centerPropsDisplay);
+      var radiusSlider = createSliderFor(1,20, spheres[i].radius * 10, function(value){
+        value = value / 10;
+        spheres[i].radius = value;
+      },
+      `slider-sphere-${i}-radius`,
+      `Radius`,
+      function(value) {
+        return value / 10;
+      });
+      div.appendChild(centerPropsDisplay);
+      div.appendChild(radiusSlider);
+      appendColorPicker(i, div);
       sphereUL.appendChild(node);
   }
+}
+
+function appendColorPicker(index, div){
+    let colorPickingDiv = document.createElement(`div`);
+    let colorPickingText = document.createElement(`p`);
+    colorPickingText.innerHTML = `Color Picker:`
+    colorPickingDiv.appendChild(colorPickingText);
+    colorPickingDiv.id = `sphere-${index}-color-picker`;
+    let sliderR = createSliderFor(0, 255, spheres[index].color.r, function(value){
+        spheres[index].color.r = value;
+        document.getElementById(`sphere-${index}-name`).innerHTML = `Sphere ${spheres[index].color.withColor(`color`)}`;
+    }, 
+    `slider-sphere-${index}-colorpicker-r`,
+    `R`);
+    colorPickingDiv.appendChild(sliderR);
+
+    let sliderG = createSliderFor(0, 255, spheres[index].color.g, function(value){
+        spheres[index].color.g = value;
+        document.getElementById(`sphere-${index}-name`).innerHTML = `Sphere ${spheres[index].color.withColor(`color`)}`;
+    }, 
+    `slider-sphere-${index}-colorpicker-g`,
+    `G`);
+    colorPickingDiv.appendChild(sliderG);
+
+    let sliderB = createSliderFor(0, 255, spheres[index].color.b, function(value){
+        spheres[index].color.b = value;
+        document.getElementById(`sphere-${index}-name`).innerHTML = `Sphere ${spheres[index].color.withColor(`color`)}`;
+    }, 
+    `slider-sphere-${index}-colorpicker-b`,
+    `B`);
+    colorPickingDiv.appendChild(sliderB);
+    div.appendChild(colorPickingDiv);
 }
 
 function setButtonForX(index, div){
@@ -272,11 +322,11 @@ function setButtonForZ(index, div){
     div.appendChild(slider);
 }
 
-function createSliderFor(min, max, value, valueChangeFunc, identifier, fieldIdentifier){
+function createSliderFor(min, max, value, valueChangeFunc, identifier, fieldIdentifier, overrideValue = null){
     var sliderDiv = document.createElement(`div`);
     var sliderValueDisplay = document.createElement(`p`);
     sliderValueDisplay.id = `${identifier}`;
-    sliderValueDisplay.innerHTML = `${fieldIdentifier}: ${value}`;
+    sliderValueDisplay.innerHTML = `${fieldIdentifier}: ${overrideValue !== null ? overrideValue(value) : value}`;
     sliderDiv.classList.add(`slider-container`);
     var slider = document.createElement(`input`);
     slider.classList.add(`slider-input`);
@@ -287,7 +337,7 @@ function createSliderFor(min, max, value, valueChangeFunc, identifier, fieldIden
     slider.max = max;
     slider.value = value;
     slider.oninput = function() {
-        sliderValueDisplay.innerHTML = `${fieldIdentifier}: ${this.value}`;
+        sliderValueDisplay.innerHTML = `${fieldIdentifier}: ${overrideValue !== null ? overrideValue(this.value) : this.value}`;
         valueChangeFunc(this.value);
     }
     return sliderDiv;

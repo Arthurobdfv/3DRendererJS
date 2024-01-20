@@ -17,3 +17,7 @@ body {
 #refresh-timer{
     font-size: 4px;
 }
+
+.sphere-center-props-display {
+    display: flex;
+}

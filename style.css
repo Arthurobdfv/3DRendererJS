@@ -1,3 +1,19 @@
-p {
+body {
+    font-family: monospace;
     font-weight: bold;
+}
+
+#side-by-side {
+    display: flex;
+    div {
+        margin: 30px;
+        }
+}
+
+.sphere-details {
+    display: flex;
+}
+
+#refresh-timer{
+    font-size: 4px;
 }

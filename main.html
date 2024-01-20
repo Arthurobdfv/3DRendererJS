@@ -2,7 +2,19 @@
 <html>
 <body>
     <link rel="stylesheet" href="style.css">
-<p id="refresh-timer"></p>
-<script src="index.js"></script>
+    <div id="side-by-side">
+        <div id="scene-canvas">
+            <h2 id="performance-measurement"></h2>
+            <canvas id="myCanvas"></canvas>
+            <!-- <p id="refresh-timer"></p> -->
+            <script src="index.js" defer></script>
+        </div>    
+        <div id="sphere-modifier">
+            <h1>Sphere Creation</h1>
+            <button id="sphere-create-btn">Create</button>
+            <ul id="sphere-list">
+            </ul>
+        </div>
+    </div>
 </body>
 </html>

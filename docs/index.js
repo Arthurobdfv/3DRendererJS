@@ -12,7 +12,7 @@ class WorkerData {
 
 var width = 600;
 var height = 300;
-let numberOfWorkers = 12;
+let numberOfWorkers = 6;
 var workers = [];
 for(let i=0; i< numberOfWorkers; i++){
     workers[i] = new Worker("worker.js");
@@ -45,34 +45,21 @@ setInterval(() => {
     let lineNumber = 0;
     let workerAssignedData = [];
     let promisses = [];
-    
-    console.log("Started Data prep loop");
-    for(let y = -height/2; y < height/2; y++){
-        let workerDataArray = [];
-        for(let x = -width/2; x < width/2; x++){
-            let vP = canva.ToViewPort(x, y, viewPort);
-            let camVpDirection = camera.position.directionTowards(vP)
-            let workerData = new WorkerData(camVpDirection);
-            workerDataArray.push(workerData);
-        }
-        
-        lineData.push({lineNumber: lineNumber, lineData: workerDataArray});
-        if(lineData.length === loadPerWorker){
-            workerAssignedData.push({ workerDataArray: lineData, spheres: spheres, cameraPosition: camera.position, workerIndex: assignedWorker });
-            lineData = [];
-            let promiseWorker = createWorker(workerAssignedData[assignedWorker], workers[assignedWorker]);
-            promiseWorker.promise.then((individualData) => {
-                for(let line = 0; line < individualData.length; line ++){
-                    canva.grid.colors[individualData[line].lineIndex] = individualData[line].processedColors;
-                }
-            })
-            promisses.push(promiseWorker.promise);
-            assignedWorker++;
-        }
-        lineNumber++;
+    let startIndex = 0;
+    let endIndex = loadPerWorker;
+
+    for(let worker = 0; worker < numberOfWorkers; worker++){
+        startIndex = worker*loadPerWorker;
+        endIndex = (worker+1)*loadPerWorker;
+        let workerDataArray = {lineData: {startLine: startIndex, endLine: endIndex},spheres: spheres, cameraPosition: camera.position, xData: {xStart: -width/2, xEnd: width/2}, yData: {yStart: (-height/2)+startIndex, yEnd: (-height/2)+endIndex}, viewport: viewPort, canvas: {height, width}, workerIndex: worker};
+        let promiseWorker = createWorker(workerDataArray, workers[worker]);
+        promiseWorker.promise.then((individualData) => {
+            for(let line = 0; line < individualData.length; line ++){
+                canva.grid.colors[individualData[line].lineIndex] = individualData[line].processedColors;
+            }
+        });
+        promisses.push(promiseWorker.promise);
     }
-    console.log("Finished Data prep loop");
-    let dataPrep = new Date().getTime();
     Promise.all(promisses)
     .then(function(workerDataArray) {
         console.log(`Finished all promises`);
@@ -88,11 +75,39 @@ setInterval(() => {
         fps = 1000/(endTime-startTime);
         performaceMeasurementText.innerHTML = `setInterval Latency: ${endTime - startTime}ms / Worker data Prep Latency: ${dataPrep-startTime}ms / Promise waiting Latency : ${renderStart-dataPrep}ms / Render time: ${endTime-renderStart}ms - FPS: ${fps}`
     }).catch(function(error) {
+        console.log(`Erro!`);
         console.log(error);
     });
+    console.log("Started Data prep loop");
+    // for(let y = -height/2; y < height/2; y++){
+    //     for(let x = -width/2; x < width/2; x++){
+    //         let vP = canva.ToViewPort(x, y, viewPort);
+    //         let camVpDirection = camera.position.directionTowards(vP)
+    //         let workerData = new WorkerData(camVpDirection);
+    //         workerDataArray.push(workerData);
+    //     }
+        
+    //     lineData.push({lineNumber: lineNumber, lineData: workerDataArray});
+    //     if(lineData.length === loadPerWorker){
+    //         workerAssignedData.push({ workerDataArray: lineData, spheres: spheres, cameraPosition: camera.position, workerIndex: assignedWorker });
+    //         lineData = [];
+    //         let promiseWorker = createWorker(workerAssignedData[assignedWorker], workers[assignedWorker]);
+    //         promiseWorker.promise.then((individualData) => {
+    //             for(let line = 0; line < individualData.length; line ++){
+    //                 canva.grid.colors[individualData[line].lineIndex] = individualData[line].processedColors;
+    //             }
+    //         })
+    //         promisses.push(promiseWorker.promise);
+    //         assignedWorker++;
+    //     }
+    //     lineNumber++;
+    // }
+    console.log("Finished Data prep loop");
+    let dataPrep = new Date().getTime();
     console.log("Finished Interval");
     //canva.gridToCanvas(context);
-  }, 10000);
+
+  }, 100);
 displaySphereList();
 
 

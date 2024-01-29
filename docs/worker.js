@@ -1,57 +1,13 @@
 class Canvas {
-    constructor(grid){
-        this.grid = grid;
-    }
-
-    drawPixel(x, y, color){
-        let gridY = (this.grid.height/2) - y;
-        let gridX = (this.grid.width/2) + x;
-        grid.setColor(gridX, gridY, color);
-    }
-
-    drawPixelOnCanvas(x, y, color, canvasContext){
-        let gridY = (this.grid.height/2) - y;
-        let gridX = (this.grid.width/2) + x;
-        canvasContext.fillStyle = toRGB(color);
-        canvasContext.fillRect(gridX, gridY, 1, 1);
-    }
-
-    Draw(){
-        return grid.DrawGrid();
-    }
-
-    getColor(x , y) {
-        let gridY = (this.grid.height/2) - y;
-        let gridX = (this.grid.width/2) + x;
-        if(gridX >= this.grid.colors[0].length){
-            console.log('X is overflowing');
-        }
-        if(gridX < 0){
-            console.log('X is underflowing');
-        }        
-        if(gridY >= this.grid.colors.length){
-            console.log('Y is overflowing');
-        }
-        if(gridY < 0){
-            console.log('Y is underflowing');
-        }
-        let colorFound = this.grid.getColor(gridX, gridY);
-        return colorFound;
+    constructor(width, height){
+        this.width = width;
+        this.height = height;
     }
 
     ToViewPort(x,y,viewport){
-        let Vx = x * (viewport.width/this.grid.width);
-        let Vy = y * (viewport.height/this.grid.height);
+        let Vx = x * (viewport.width/this.width);
+        let Vy = y * (viewport.height/this.height);
         return new Vector3(Vx,Vy,viewport.distance)
-    }
-
-    gridToCanvas(canvasContext) {
-        for(let x = -this.grid.width/2; x < this.grid.width/2; x++){
-            for(let y = -this.grid.height/2; y < this.grid.height/2; y++){
-                let colorFound = this.getColor(x, y);
-                this.drawPixelOnCanvas(x, y, colorFound, canvasContext);
-            }
-        }
     }
 }
 
@@ -146,18 +102,23 @@ onmessage = (e) => {
     let processedPixels = 0;
     let spheres = e.data.spheres;
     let cameraPosition = e.data.cameraPosition;
+    let canvas = new Canvas(e.data.canvas.width, e.data.canvas.height)
     let processedData = [];
-    for(let line = 0; line < e.data.workerDataArray.length; line++){
-        var lineData = e.data.workerDataArray[line].lineData;
+    for(let line = 0; (line+e.data.lineData.startLine) < e.data.lineData.endLine; line++){
+        //var lineData = e.data.workerDataArray[line].lineData;
         let processedLineData = [];
-        for(let colorIndex = 0; colorIndex < lineData.length; colorIndex++){
-            let camVpDirection = lineData[colorIndex].camVpDirection;
+        for(let colorIndex = 0; e.data.xData.xStart+colorIndex < e.data.xData.xEnd; colorIndex++){
+            let x = e.data.xData.xStart+colorIndex;
+            let y = e.data.yData.yStart+line;
+            let vP = canvas.ToViewPort(x, y, e.data.viewport);
+            let camVpDirection = new Vector3(vP.x- cameraPosition.x,vP.y- cameraPosition.y,vP.z- cameraPosition.z);
+            //let camVpDirection = lineData[colorIndex].camVpDirection;
             let ray = new Ray(cameraPosition, camVpDirection);
             let color = ray.TraceRay(1, Number.MAX_SAFE_INTEGER, spheres);
             processedLineData.push(color);
             processedPixels++;
         }
-        processedData.push({lineIndex: e.data.workerDataArray[line].lineNumber, processedColors: processedLineData});
+        processedData.push({lineIndex: (line+e.data.lineData.startLine), processedColors: processedLineData});
     }
     let endTime = new Date().getTime();
     console.log(`Worker index ${e.data.workerIndex} took ${endTime-startTime}ms to process ${processedPixels}`);

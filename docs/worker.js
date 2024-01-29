@@ -16,6 +16,7 @@ class Color {
         this.r = r;
         this.g = g;
         this.b = b;
+        this.hexCode = `0xFF${this.b.toString(16).toUpperCase().padStart(2, '0')}${this.g.toString(16).toUpperCase().padStart(2, '0')}${this.r.toString(16).toUpperCase().padStart(2, '0')}`
     }
 
     withColor(string){

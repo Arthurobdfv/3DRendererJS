@@ -3,6 +3,7 @@ export class Color {
         this.r = r;
         this.g = g;
         this.b = b;
+        this.hexCode = `0xFF${this.b.toString(16).toUpperCase().padStart(2, '0')}${this.g.toString(16).toUpperCase().padStart(2, '0')}${this.r.toString(16).toUpperCase().padStart(2, '0')}`;
     }
 
     withColor(string){
@@ -196,8 +197,8 @@ export class Canvas {
         let idx = 0;
         for(let y = -this.grid.height/2; y < this.grid.height/2; y++){                
             for(let x = -this.grid.width/2; x < this.grid.width/2; x++){
-                let colorFound = this.getColorHex(x, y);
-                bufferData[idx++] = colorFound;
+                let colorFound = this.getColor(x, y);
+                bufferData[idx++] = colorFound.hexCode;
                 // this.drawPixelOnCanvasHex(x, y, colorFound, bufferData);
             }
         }

@@ -2,224 +2,119 @@ const refreshTimer = document.getElementById('refresh-timer');
 const createSphereButton = document.getElementById('sphere-create-btn');
 const performaceMeasurementText = document.getElementById(`performance-measurement`);
 const canvas = document.getElementById(`myCanvas`);
-class Color {
-    constructor(r, g, b){
-        this.r = r;
-        this.g = g;
-        this.b = b;
-    }
+import * as modules from "./modules/modules.js";
 
-    withColor(string){
-        return `<span style="color: rgb(${this.r},${this.g},${this.b})">${string}</span>`
-    }
-
-    toRGB(){
-        return `rgb(${this.r},${this.g}, ${this.b})`;
-    }
-}
-
-class HtmlPixel {
-    setColor(color){
-        this.color = color;
-    }
-}
-
-class ViewPort{
-    constructor(width, height){
-        this.distance = 1;
-        this.width = width;
-        this.height = height;
-    }
-}
-
-class Grid {
-    constructor(width, height){
-        this.width = width;
-        this.height = height;
-        this.colors = [];
-        for(let i = 0; i <= this.height; i++){
-            let line = [];
-            for(let j = 0; j <= this.width; j++){
-                line.push(new Color(0,0,0));
-            }
-            this.colors.push(line);
-        }
-    }
-
-    setColor(x, y, color){
-        this.colors[x][y] = color;
-    }
-
-    getColor(x,y){
-        return this.colors[x][y];
-    }
-
-    DrawGrid(){
-        let text = '';
-        for(let i = 0; i < this.height; i++){
-            for(let j = 0; j < this.width; j++){
-                text += grid.getColor(i,j).withColor('@');
-            }
-            text += '</br>';
-        }
-        return text;
-    }
-}
-
-class Scene {
-    constructor(gameObjects){
-        this.gameObjects = gameObjects;
-    }
-
-    AddGameObject(gameObject){
-        this.gameObjects.Add(gameObject);
-    }
-}
-
-class Sphere {
-    constructor(center, radius, color){
-        this.center = center;
-        this.radius = radius;
-        this.color = color;
-    }
-}
-
-class Vector3 {
-    constructor(x, y, z){
-        this.x = x;
-        this.y = y;
-        this.z = z;
-    }
-
-    directionTowards(to){
-        let deltaX = to.x - this.x;
-        let deltaY = to.y - this.y;
-        let deltaZ = to.z - this.z;
-        return new Vector3(deltaX, deltaY, deltaZ);
-    }
-
-    dot(vector){
-        return (this.x * vector.x) + (this.y * vector.y) + (this.z * vector.z);
-    }
-}
-
- class Camera {
-    constructor(position, direction){
-        this.position = position;
-        this.direction = direction;
-    }
-}
-
-class Canvas {
-    constructor(grid){
-        this.grid = grid;
-    }
-
-    drawPixel(x, y, color){
-        let gridY = (this.grid.width/2) + x;
-        let gridX = (this.grid.height/2) - y;
-        grid.setColor(gridX, gridY, color);
-    }
-
-    drawPixelOnCanvas(x, y, color, canvasContext){
-        let gridY = (this.grid.width/2) + x;
-        let gridX = (this.grid.height/2) - y;
-        canvasContext.fillStyle = color.toRGB();
-        canvasContext.fillRect(gridY, gridX, 1, 1);
-    }
-
-    Draw(){
-        return grid.DrawGrid();
-    }
-
-    ToViewPort(x,y,viewport){
-        let Vx = x * (viewport.width/grid.width);
-        let Vy = y * (viewport.height/grid.height);
-        return new Vector3(Vx,Vy,viewport.distance)
-    }
-}
-
-class Ray {
-    constructor(startPos, direction){
-        this.startPos = startPos;
-        this.direction = direction;
-    }
-
-    TraceRay(tInitial, tFinal, spheres){
-        let closest_t = Number.MAX_SAFE_INTEGER;
-        let closest_sphere = null;
-        spheres.forEach(sphere => {
-            let results = this.IntersectRaySphere(sphere);
-            let t1 = results[0];
-            let t2 = results[1];
-            if(t2 > tInitial && t2 < tFinal && t2 < closest_t){
-                closest_t = t2;
-                closest_sphere = sphere;
-            }
-            if(t1 > tInitial && t1 < tFinal && t1 < closest_t){
-                closest_t = t1;
-                closest_sphere = sphere;
-            }
-
-        });
-        if(closest_sphere === null){
-            return new Color(0,0,0);
-        }
-        return closest_sphere.color;
-    }
-
-    IntersectRaySphere(sphere){
-        let r = sphere.radius;
-        let c0 = sphere.center.directionTowards(this.startPos);
-
-        let a = this.direction.dot(this.direction);
-        let b = 2*this.direction.dot(c0);
-        let c = (c0.dot(c0)) - r*r;
-
-        let discriminant = b*b - 4*a*c;
-        if(discriminant < 0) {
-            return [Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER];
-        }
-
-        let t1 = (-b + Math.sqrt(discriminant*discriminant) / (2*a));
-        let t2 = (-b - Math.sqrt(discriminant*discriminant) / (2*a));
-        return [t1,t2];
+class WorkerData {
+    constructor(camVpDirection){
+        this.camVpDirection = camVpDirection;
     }
 }
 
 var width = 600;
 var height = 300;
+let numberOfWorkers = 12;
+var workers = [];
+for(let i=0; i< numberOfWorkers; i++){
+    workers[i] = new Worker("worker.js");
+}
+
+
 canvas.width = width;
 canvas.height = height;
 var context = canvas.getContext("2d");
-let grid = new Grid(width, height);
-let canva = new Canvas(grid);
-let camera = new Camera(new Vector3(0, 0, 0), new Vector3(0, 0, 1));
+var data = context.createImageData(width, height);
+let grid = new modules.Grid(width, height);
+let canva = new modules.Canvas(grid);
+let camera = new modules.Camera(new modules.Vector3(0, 0, 0), new modules.Vector3(0, 0, 1));
 let timerInSeconds = 0;
-let viewPort = new ViewPort(2,1);
-let sphereRed = new Sphere(new Vector3(0,-1,3), 1, new Color(255,0,0));
-let sphereBlue = new Sphere(new Vector3(2,0,4), 1, new Color(0,0,255));
-let sphereGreen = new Sphere(new Vector3(-2,0,4), 1, new Color(0,255,135));
+let viewPort = new modules.ViewPort(2,1);
+let sphereRed = new modules.Sphere(new modules.Vector3(0,-1,3), 1, new modules.Color(255,0,0));
+let sphereBlue = new modules.Sphere(new modules.Vector3(2,0,4), 1, new modules.Color(0,0,255));
+let sphereGreen = new modules.Sphere(new modules.Vector3(-2,0,4), 1, new modules.Color(0,255,135));
+let loadPerWorker = grid.height / numberOfWorkers;
 
+
+console.log(`Load per worker: ${loadPerWorker}`);
 let spheres = [sphereRed, sphereBlue, sphereGreen];
 let fps = 30;
 setInterval(() => { 
     let startTime = new Date().getTime();
     timerInSeconds ++;
-    for(let x = -width/2; x < width/2; x++){
-        for(let y = -height/2; y < height/2; y++){
+    let assignedWorker = 0;
+    let lineData = [];
+    let lineNumber = 0;
+    let workerAssignedData = [];
+    let promisses = [];
+    
+    console.log("Started Data prep loop");
+    for(let y = -height/2; y < height/2; y++){
+        let workerDataArray = [];
+        for(let x = -width/2; x < width/2; x++){
             let vP = canva.ToViewPort(x, y, viewPort);
-            let ray = new Ray(camera.position, camera.position.directionTowards(vP));
-            color = ray.TraceRay(1, Number.MAX_SAFE_INTEGER, spheres);
-            canva.drawPixelOnCanvas(x, y, color, context);
+            let camVpDirection = camera.position.directionTowards(vP)
+            let workerData = new WorkerData(camVpDirection);
+            workerDataArray.push(workerData);
         }
+        
+        lineData.push({lineNumber: lineNumber, lineData: workerDataArray});
+        if(lineData.length === loadPerWorker){
+            workerAssignedData.push({ workerDataArray: lineData, spheres: spheres, cameraPosition: camera.position, workerIndex: assignedWorker });
+            lineData = [];
+            let promiseWorker = createWorker(workerAssignedData[assignedWorker], workers[assignedWorker]);
+            promiseWorker.promise.then((individualData) => {
+                for(let line = 0; line < individualData.length; line ++){
+                    canva.grid.colors[individualData[line].lineIndex] = individualData[line].processedColors;
+                }
+            })
+            promisses.push(promiseWorker.promise);
+            assignedWorker++;
+        }
+        lineNumber++;
     }
-
-    let endTime = new Date().getTime();
-    fps = 1000/(endTime-startTime);
-    performaceMeasurementText.innerHTML = `Render Latency: ${endTime - startTime}ms - FPS: ${fps}`
-  }, 1000/fps);
+    console.log("Finished Data prep loop");
+    let dataPrep = new Date().getTime();
+    Promise.all(promisses)
+    .then(function(workerDataArray) {
+        console.log(`Finished all promises`);
+        // for(let i = 0; i < workerDataArray.length; i++){
+        //     let individualData = workerDataArray[i];
+        //     for(let line = 0; line < individualData.length; line ++){
+        //         canva.grid.colors[individualData[line].lineIndex] = individualData[line].processedColors;
+        //     }
+        // }
+        let renderStart = new Date().getTime();
+        canva.gridToCanvasHex(context, data);
+        let endTime = new Date().getTime();
+        fps = 1000/(endTime-startTime);
+        performaceMeasurementText.innerHTML = `setInterval Latency: ${endTime - startTime}ms / Worker data Prep Latency: ${dataPrep-startTime}ms / Promise waiting Latency : ${renderStart-dataPrep}ms / Render time: ${endTime-renderStart}ms - FPS: ${fps}`
+    }).catch(function(error) {
+        console.log(error);
+    });
+    console.log("Finished Interval");
+    //canva.gridToCanvas(context);
+  }, 10000);
 displaySphereList();
+
+
+function createWorker(i, worker) {
+    return {promise: new Promise(function(resolve, reject) {
+        worker.postMessage(i);
+        worker.onmessage = function(event){
+            // If you report errors via messages, you'd have a branch here for checking
+            // for an error and either calling `reject` or `resolve` as appropriate.
+            resolve(event.data);
+        };
+        // EITHER:
+        worker.onerror = reject; // Rejects the promise if an error is raised by the web worker, passing along the ErrorEvent
+        // OR:
+        worker.onerror = function(event) {
+            // Rejects the promise using the error associated with the ErrorEvent
+            reject(event.error);
+        };
+    }), worker: worker};
+}
+
+
 
 
 createSphereButton.onclick = function() {

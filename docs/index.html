@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <html>
+    <script src="index.js" type="module" defer></script>
+    <script src="./modules/modules.js" type="module"></script>
+    <script src="./worker.js" type="module"></script>
 <body>
     <link rel="stylesheet" href="style.css">
     <h1>3DRendererJS by Arthuro Verissimo</h1>
@@ -9,9 +12,8 @@
             <h2 id="performance-measurement"></h2>
             <canvas id="myCanvas"></canvas>
             <p id="refresh-timer"></p>
-            <script src="index.js" defer></script>
+            <div id="sphere-modifier">
         </div>    
-        <div id="sphere-modifier">
             <h1>Sphere Creation</h1>
             <button id="sphere-create-btn">Create</button>
             <ul id="sphere-list">
